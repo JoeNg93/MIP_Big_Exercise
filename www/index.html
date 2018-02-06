@@ -38,15 +38,15 @@
     <title>MIP Big Exercise</title>
   </head>
   <body>
-    <div class="app">
-      <h1>Apache Cordova</h1>
-      <div id="deviceready" class="blink">
-        <p class="event listening">Connecting to Device</p>
-        <p class="event received">Device is Ready</p>
-      </div>
-    </div>
+    <label for="address-input">Address</label>
+    <input id="address-input" type="text">
+    <button id="get-lat-lon-btn">Get Lat Long</button>
+    <div id="lat-long-content"></div>
+    <div id="map" style="height: 500px; width: 500px"></div>
     <script type="text/javascript" src="cordova.js"></script>
-    <script src="js/axios.min.js"></script>
     <script type="text/javascript" src="js/index.js"></script>
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBzyeRbwaJmvWe_R4b7j4R15Lc8fcw16B0&callback=mapIsReady"
+        defer></script>
   </body>
 </html>

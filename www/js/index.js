@@ -16,6 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+var map = null;
+var geocoder = null;
+
 var app = {
   // Application Constructor
   initialize: function() {
@@ -31,7 +34,10 @@ var app = {
   // Bind any cordova events here. Common events are:
   // 'pause', 'resume', etc.
   onDeviceReady: function() {
-    this.receivedEvent('deviceready');
+    var getLatLngBtn = elID('get-lat-lon-btn');
+    var inputEl = elID('address-input');
+    inputEl.addEventListener('keypress', onPressEnterInputField);
+    getLatLngBtn.addEventListener('click', handleClickGetLatLng);
   },
 
   // Update DOM on a Received Event
@@ -46,5 +52,59 @@ var app = {
     console.log('Received Event: ' + id);
   }
 };
+
+function elID(id) {
+  return document.getElementById(id);
+}
+
+function onPressEnterInputField(evt) {
+  if (evt.keyCode === 13) {
+    getLatLong();
+  }
+}
+
+function getLatLong(address) {
+  return axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
+    params: {
+      address: 'Hanhitie 17, Oulu 90150, Finland',
+      key: 'AIzaSyAmyYNlxuCGvftIhFlKACAqwRbBPDqtySI'
+    }
+  });
+}
+
+function handleClickGetLatLng() {
+  var address = elID('address-input').value;
+  var outputEl = elID('lat-long-content');
+  geocoder.geocode({ address: address }, function(results, status) {
+    if (status !== 'OK') {
+      outputEl.innerHTML = 'Error! Request to get lat lng cannot be fulfilled';
+      return;
+    }
+    var location = results[0].geometry.location;
+    var locationObj = {
+      lat: location.lat(),
+      lng: location.lng()
+    };
+    outputEl.innerHTML =
+      'Latitude: ' + locationObj.lat + ', Longitude: ' + locationObj.lng;
+    addMarkerToMap(locationObj, map);
+    map.setCenter(locationObj);
+  });
+}
+
+function mapIsReady() {
+  map = new google.maps.Map(elID('map'), {
+    center: { lat: -34.397, lng: 150.644 },
+    zoom: 10
+  });
+  geocoder = new google.maps.Geocoder();
+}
+
+function addMarkerToMap(position, map) {
+  var marker = new google.maps.Marker({
+    position: position,
+    map: map
+  });
+}
 
 app.initialize();
