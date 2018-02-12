@@ -35,21 +35,14 @@ var app = {
   // 'pause', 'resume', etc.
   onDeviceReady: function() {
     var getLatLngBtn = elID('get-lat-lon-btn');
+    var getCurrentLocationBtn = elID('get-current-location-btn');
     var inputEl = elID('address-input');
     inputEl.addEventListener('keypress', onPressEnterInputField);
     getLatLngBtn.addEventListener('click', handleClickGetLatLng);
-  },
-
-  // Update DOM on a Received Event
-  receivedEvent: function(id) {
-    var parentElement = document.getElementById(id);
-    var listeningElement = parentElement.querySelector('.listening');
-    var receivedElement = parentElement.querySelector('.received');
-
-    listeningElement.setAttribute('style', 'display:none;');
-    receivedElement.setAttribute('style', 'display:block;');
-
-    console.log('Received Event: ' + id);
+    getCurrentLocationBtn.addEventListener(
+      'click',
+      handleClickGetCurrentLocation
+    );
   }
 };
 
@@ -63,39 +56,71 @@ function onPressEnterInputField(evt) {
   }
 }
 
-function getLatLong(address) {
-  return axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
-    params: {
-      address: 'Hanhitie 17, Oulu 90150, Finland',
-      key: 'AIzaSyAmyYNlxuCGvftIhFlKACAqwRbBPDqtySI'
-    }
+function getLatLng(address) {
+  return new Promise(function(resolve, reject) {
+    geocoder.geocode({ address: address }, function(results, status) {
+      if (status !== 'OK') {
+        reject('Error! Request to get lat lng cannot be fulfilled');
+      }
+      resolve(results);
+    });
   });
 }
 
-function handleClickGetLatLng() {
-  var address = elID('address-input').value;
-  var outputEl = elID('lat-long-content');
-  geocoder.geocode({ address: address }, function(results, status) {
-    if (status !== 'OK') {
-      outputEl.innerHTML = 'Error! Request to get lat lng cannot be fulfilled';
-      return;
-    }
-    var location = results[0].geometry.location;
-    var locationObj = {
-      lat: location.lat(),
-      lng: location.lng()
-    };
-    outputEl.innerHTML =
-      'Latitude: ' + locationObj.lat + ', Longitude: ' + locationObj.lng;
-    addMarkerToMap(locationObj, map);
-    map.setCenter(locationObj);
+function getCurrentPosition() {
+  return new Promise(function(resolve, reject) {
+    navigator.geolocation.getCurrentPosition(resolve, reject);
   });
+}
+
+function handleClickGetCurrentLocation() {
+  var yourLocationEl = elID('your-location');
+  yourLocationEl.innerHTML = 'Getting your current location. Please wait...';
+  getCurrentPosition()
+    .then(function(position) {
+      var lat = position.coords.latitude;
+      var lng = position.coords.longitude;
+      var locationObj = {
+        lat: lat,
+        lng: lng
+      };
+      addMarkerToMap(locationObj, map);
+      map.setCenter(locationObj);
+      yourLocationEl.innerHTML =
+        'Your location: ' + lat + ' (lat), ' + lng + ' (lng)';
+    })
+    .catch(function(reason) {
+      yourLocationEl.innerHTML =
+        'Cannot get current location. Error: ' + reason.message;
+    });
+}
+
+function handleClickGetLatLng() {
+  var outputEl = elID('lat-long-content');
+  var inputEl = elID('address-input');
+  var address = inputEl.value;
+  getLatLng(address)
+    .then(function(results) {
+      inputEl.value = results[0].formatted_address;
+      var location = results[0].geometry.location;
+      var locationObj = {
+        lat: location.lat(),
+        lng: location.lng()
+      };
+      outputEl.innerHTML =
+        'Latitude: ' + locationObj.lat + ', Longitude: ' + locationObj.lng;
+      addMarkerToMap(locationObj, map);
+      map.setCenter(locationObj);
+    })
+    .catch(function(reason) {
+      outputEl.innerHTML = reason;
+    });
 }
 
 function mapIsReady() {
   map = new google.maps.Map(elID('map'), {
-    center: { lat: -34.397, lng: 150.644 },
-    zoom: 10
+    center: { lat: 65.0120888, lng: 25.46507719996 },
+    zoom: 13
   });
   geocoder = new google.maps.Geocoder();
 }
