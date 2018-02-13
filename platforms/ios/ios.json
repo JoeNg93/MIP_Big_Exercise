@@ -19,7 +19,7 @@
         "parents": {
           "NSLocationWhenInUseUsageDescription": [
             {
-              "xml": "<string>Need location to track current location</string>",
+              "xml": "<string>Need location service to track current location</string>",
               "count": 1,
               "mode": "merge",
               "id": "config.xml"

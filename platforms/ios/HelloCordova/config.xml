@@ -38,7 +38,7 @@
     <allow-intent href="mailto:*" />
     <allow-intent href="geo:*" />
     <edit-config file="*-Info.plist" mode="merge" target="NSLocationWhenInUseUsageDescription">
-        <string>Need location to track current location</string>
+        <string>Need location service to track current location</string>
     </edit-config>
     <allow-intent href="itms:*" />
     <allow-intent href="itms-apps:*" />

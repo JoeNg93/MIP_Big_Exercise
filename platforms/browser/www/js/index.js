@@ -1,24 +1,3 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
-var map = null;
-var geocoder = null;
-
 var app = {
   // Application Constructor
   initialize: function() {
@@ -29,107 +8,187 @@ var app = {
     );
   },
 
-  // deviceready Event Handler
-  //
-  // Bind any cordova events here. Common events are:
-  // 'pause', 'resume', etc.
   onDeviceReady: function() {
-    var getLatLngBtn = elID('get-lat-lon-btn');
-    var getCurrentLocationBtn = elID('get-current-location-btn');
-    var inputEl = elID('address-input');
-    inputEl.addEventListener('keypress', onPressEnterInputField);
-    getLatLngBtn.addEventListener('click', handleClickGetLatLng);
-    getCurrentLocationBtn.addEventListener(
-      'click',
-      handleClickGetCurrentLocation
-    );
+    var app = new Vue({
+      el: '#app',
+      data: {
+        allLocationData: [],
+        currentLocationData: {},
+        outputMsg: '',
+        yourLocationMsg: '',
+        address: '',
+        map: null,
+        geocoder: null,
+        openMarkersModal: false,
+        fromMarker: "default",
+        toMarker: "default"
+      },
+      mounted: function() {
+        this.map = new google.maps.Map(document.getElementById('map'), {
+          center: { lat: 65.0120888, lng: 25.46507719996 },
+          zoom: 13
+        });
+        this.geocoder = new google.maps.Geocoder();
+      },
+      methods: {
+        handleClickGetLatLng: function() {
+          var self = this;
+          self
+            ._getLatLng(self.address)
+            .then(function(result) {
+              self.address = result.address;
+              var locationObj = {
+                lat: result.coords.lat,
+                lng: result.coords.lng
+              };
+              self.outputMsg =
+                'Latitude: ' +
+                locationObj.lat +
+                ', Longitude: ' +
+                locationObj.lng;
+              var marker = self._addMarkerToMap(locationObj);
+              self.allLocationData.push({
+                marker: marker,
+                address: self.address
+              });
+              self.map.setCenter(locationObj);
+            })
+            .catch(function(reason) {
+              self.outputMsg = reason;
+            });
+        },
+        handleClickGetCurrentLocation: function() {
+          var self = this;
+          self.yourLocationMsg =
+            'Getting your current location. Please wait...';
+          self
+            ._getCurrentPosition()
+            .then(function(position) {
+              var lat = position.coords.latitude;
+              var lng = position.coords.longitude;
+              var locationObj = {
+                lat: lat,
+                lng: lng
+              };
+              var marker = self._addCurrentPositionMarkerToMap(locationObj);
+              self.currentLocationData.marker = marker;
+              self.map.setCenter(locationObj);
+              self.yourLocationMsg =
+                'Your location: ' + lat + ' (lat), ' + lng + ' (lng)';
+              return self._getAddress(locationObj);
+            })
+            .then(function(result) {
+              self.currentLocationData.address = result.address;
+            })
+            .catch(function(reason) {
+              self.yourLocationMsg = 'Error: ' + reason.message;
+            });
+        },
+        handleClickGetDistance: function () {
+          console.log(this.fromMarker);
+          console.log(this.toMarker);
+        },
+        handleClickOpenMarkersModal: function () {
+          var markerCount = 0;
+          if (this.currentLocationData.marker) {
+            markerCount += 1;
+          }
+          markerCount += this.allLocationData.length;
+          if (markerCount < 2) {
+            alert('Please add at least 2 markers');
+            return;
+          }
+          this.openMarkersModal = true;
+        },
+        _getLatLng: function(address) {
+          var self = this;
+          return new Promise(function(resolve, reject) {
+            self.geocoder.geocode({ address: address }, function(
+              results,
+              status
+            ) {
+              if (status !== 'OK') {
+                reject('Error! Request to get lat lng cannot be fulfilled');
+              }
+              var address = results[0].formatted_address;
+              var location = results[0].geometry.location;
+              var locationObj = {
+                lat: location.lat(),
+                lng: location.lng()
+              };
+              resolve({ coords: locationObj, address: address });
+            });
+          });
+        },
+        _getAddress: function(locationObj) {
+          var self = this;
+          return new Promise(function(resolve, reject) {
+            self.geocoder.geocode({ location: locationObj }, function(
+              results,
+              status
+            ) {
+              if (status !== 'OK') {
+                reject('Error! Request to get lat lng cannot be fulfilled');
+              }
+              var address = results[0].formatted_address;
+              var location = results[0].geometry.location;
+              var locationObj = {
+                lat: location.lat(),
+                lng: location.lng()
+              };
+              resolve({ coords: locationObj, address: address });
+            });
+          });
+        },
+        _getCurrentPosition: function() {
+          return new Promise(function(resolve, reject) {
+            navigator.geolocation.getCurrentPosition(resolve, reject);
+          });
+        },
+        _addMarkerToMap: function(locationObj) {
+          this._clearMarker(locationObj);
+          var marker = new google.maps.Marker({
+            position: locationObj,
+            animation: google.maps.Animation.DROP,
+            map: this.map
+          });
+          return marker;
+        },
+        _clearMarker: function(locationObj) {
+          var locationData = this.allLocationData.find(function(data) {
+            return (
+              data.marker.position.lat() === locationObj.lat &&
+              data.marker.position.lng() === locationObj.lng
+            );
+          });
+
+          if (locationData) {
+            locationData.marker.setMap(null);
+            this.allLocationData = this.allLocationData.filter(function(data) {
+              return (
+                data.marker.position.lat() !==
+                  locationData.marker.position.lat() &&
+                data.marker.position.lng() !==
+                  locationData.marker.position.lng()
+              );
+            });
+          }
+        },
+        _addCurrentPositionMarkerToMap: function(locationObj) {
+          if (this.currentLocationData.marker) {
+            this.currentLocationData.marker.setMap(null);
+            this.currentLocationData.marker = null;
+          }
+          var marker = new google.maps.Marker({
+            position: locationObj,
+            animation: google.maps.Animation.DROP,
+            map: this.map
+          });
+          return marker;
+        }
+      }
+    });
   }
 };
-
-function elID(id) {
-  return document.getElementById(id);
-}
-
-function onPressEnterInputField(evt) {
-  if (evt.keyCode === 13) {
-    getLatLong();
-  }
-}
-
-function getLatLng(address) {
-  return new Promise(function(resolve, reject) {
-    geocoder.geocode({ address: address }, function(results, status) {
-      if (status !== 'OK') {
-        reject('Error! Request to get lat lng cannot be fulfilled');
-      }
-      resolve(results);
-    });
-  });
-}
-
-function getCurrentPosition() {
-  return new Promise(function(resolve, reject) {
-    navigator.geolocation.getCurrentPosition(resolve, reject);
-  });
-}
-
-function handleClickGetCurrentLocation() {
-  var yourLocationEl = elID('your-location');
-  yourLocationEl.innerHTML = 'Getting your current location. Please wait...';
-  getCurrentPosition()
-    .then(function(position) {
-      var lat = position.coords.latitude;
-      var lng = position.coords.longitude;
-      var locationObj = {
-        lat: lat,
-        lng: lng
-      };
-      addMarkerToMap(locationObj, map);
-      map.setCenter(locationObj);
-      yourLocationEl.innerHTML =
-        'Your location: ' + lat + ' (lat), ' + lng + ' (lng)';
-    })
-    .catch(function(reason) {
-      yourLocationEl.innerHTML =
-        'Cannot get current location. Error: ' + reason.message;
-    });
-}
-
-function handleClickGetLatLng() {
-  var outputEl = elID('lat-long-content');
-  var inputEl = elID('address-input');
-  var address = inputEl.value;
-  getLatLng(address)
-    .then(function(results) {
-      inputEl.value = results[0].formatted_address;
-      var location = results[0].geometry.location;
-      var locationObj = {
-        lat: location.lat(),
-        lng: location.lng()
-      };
-      outputEl.innerHTML =
-        'Latitude: ' + locationObj.lat + ', Longitude: ' + locationObj.lng;
-      addMarkerToMap(locationObj, map);
-      map.setCenter(locationObj);
-    })
-    .catch(function(reason) {
-      outputEl.innerHTML = reason;
-    });
-}
-
-function mapIsReady() {
-  map = new google.maps.Map(elID('map'), {
-    center: { lat: 65.0120888, lng: 25.46507719996 },
-    zoom: 13
-  });
-  geocoder = new google.maps.Geocoder();
-}
-
-function addMarkerToMap(position, map) {
-  var marker = new google.maps.Marker({
-    position: position,
-    map: map
-  });
-}
 
 app.initialize();

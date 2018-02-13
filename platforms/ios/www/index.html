@@ -34,21 +34,82 @@
     <meta name="msapplication-tap-highlight" content="no">
     <meta name="viewport"
           content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
-    <link rel="stylesheet" type="text/css" href="css/index.css">
+
+    <link rel="stylesheet" href="css/normalize.min.css">
+    <link rel="stylesheet" href="css/tachyons.min.css">
+    <link rel="stylesheet" href="css/bulma.min.css">
+    <link rel="stylesheet" href="css/index.css">
     <title>MIP Big Exercise</title>
   </head>
   <body>
-    <label for="address-input">Address</label>
-    <input id="address-input" type="text">
-    <button id="get-lat-lon-btn">Get Lat Long</button>
-    <button id="get-current-location-btn">Current Location</button>
-    <div id="lat-long-content"></div>
-    <div id="your-location"></div>
-    <div id="map" style="height: 500px; width: 500px"></div>
+    <div id="app">
+      <div id="map" class="column is-8 is-offset-2 h-50"></div>
+      <div class="column is-4 is-offset-4 is-8-mobile is-offset-2-mobile">
+        <div class="field">
+          <div class="control">
+            <input id="address-input" class="input is-info" v-model="address" type="text" placeholder="Address">
+          </div>
+        </div>
+      </div>
+      <div class="columns">
+        <div class="column is-2 is-offset-3 is-6-mobile is-offset-3-mobile">
+          <button id="get-lat-lon-btn" class="button is-outlined is-link w-100" @click="handleClickGetLatLng">Get Lat
+            Long
+          </button>
+        </div>
+        <div class="column is-2 is-6-mobile is-offset-3-mobile">
+          <button id="get-current-location-btn" class="button is-outlined is-info w-100">Current Location</button>
+        </div>
+        <div class="column is-2 is-6-mobile is-offset-3-mobile">
+          <button id="get-marker-distance-btn" class="button is-outlined is-success w-100">Get Markers Distance
+          </button>
+        </div>
+      </div>
+      <div id="marker-distance-modal" class="modal">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+          <div class="modal-card-head">
+            <p class="modal-card-title">Get Markers Distance</p>
+            <button id="close-modal-btn" class="delete"></button>
+          </div>
+          <div class="modal-card-body">
+            <div class="field">
+              <label class="label">From</label>
+              <div class="control">
+                <div class="select">
+                  <select id="from-marker">
+                    <option disabled selected>Select Marker...</option>
+                    <option value="a">Hehehe</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="label">To</label>
+              <div class="control">
+                <div class="select">
+                  <select id="to-marker">
+                    <option disabled selected>Select Marker...</option>
+                    <option>With options</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-card-foot">
+            <button class="button is-primary">Get Distance</button>
+            <button id="cancel-modal-btn" class="button">Cancel</button>
+          </div>
+        </div>
+      </div>
+      <div id="lat-long-content"></div>
+      <div id="your-location"></div>
+    </div>
     <script type="text/javascript" src="cordova.js"></script>
+    <script type="text/javascript" src="js/vue.min.js"></script>
+    <script type="text/javascript" src="js/jquery-3.1.1.min.js"></script>
     <script type="text/javascript" src="js/index.js"></script>
-    <script
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBzyeRbwaJmvWe_R4b7j4R15Lc8fcw16B0&callback=mapIsReady"
-        defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBzyeRbwaJmvWe_R4b7j4R15Lc8fcw16B0"></script>
   </body>
 </html>

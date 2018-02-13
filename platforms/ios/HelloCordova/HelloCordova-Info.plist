@@ -53,6 +53,6 @@
       <true/>
     </dict>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>Need location to track current location</string>
+    <string>Need location service to track current location</string>
   </dict>
 </plist>
