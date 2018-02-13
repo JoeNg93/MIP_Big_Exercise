@@ -16,12 +16,13 @@ var app = {
         currentLocationData: {},
         outputMsg: '',
         yourLocationMsg: '',
+        distanceMsg: '',
         address: '',
         map: null,
         geocoder: null,
         openMarkersModal: false,
-        fromMarker: "default",
-        toMarker: "default"
+        fromMarker: 'default',
+        toMarker: 'default'
       },
       mounted: function() {
         this.map = new google.maps.Map(document.getElementById('map'), {
@@ -84,11 +85,30 @@ var app = {
               self.yourLocationMsg = 'Error: ' + reason.message;
             });
         },
-        handleClickGetDistance: function () {
-          console.log(this.fromMarker);
-          console.log(this.toMarker);
+        handleClickGetDistance: function() {
+          // var from = {
+          //   lat: this.fromMarker.position.lat(),
+          //   lng: this.fromMarker.position.lng()
+          // };
+          // var to = {
+          //   lat: this.toMarker.position.lat(),
+          //   lng: this.toMarker.position.lng()
+          // };
+          var from = new google.maps.LatLng(
+            this.fromMarker.position.lat(),
+            this.fromMarker.position.lng()
+          );
+          var to = new google.maps.LatLng(
+            this.toMarker.position.lat(),
+            this.toMarker.position.lng()
+          );
+          var distance = google.maps.geometry.spherical.computeDistanceBetween(
+            from,
+            to
+          );
+          this.distanceMsg = (distance / 1000).toFixed(2) + ' km';
         },
-        handleClickOpenMarkersModal: function () {
+        handleClickOpenMarkersModal: function() {
           var markerCount = 0;
           if (this.currentLocationData.marker) {
             markerCount += 1;
