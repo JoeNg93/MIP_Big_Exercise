@@ -1,5 +1,7 @@
 html,
 body,
-#app {
+#app,
+#mainPage,
+#navigationPage {
     height: 100%;
 }

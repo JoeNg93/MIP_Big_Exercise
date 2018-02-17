@@ -43,84 +43,118 @@
   </head>
   <body>
     <div id="app">
-      <div id="map" class="column is-8 is-offset-2 h-50"></div>
-      <div class="column is-4 is-offset-4 is-8-mobile is-offset-2-mobile">
-        <div class="field">
-          <div class="control">
-            <input class="input is-info" v-model="address" type="text" placeholder="Address">
+      <div id="mainPage" v-show="currentPage === 'mainPage'">
+        <div id="map" class="column is-8 is-offset-2 h-50"></div>
+        <div class="column is-4 is-offset-4 is-8-mobile is-offset-2-mobile">
+          <div class="field">
+            <div class="control">
+              <input class="input is-info" v-model="address" type="text" placeholder="Address">
+            </div>
           </div>
         </div>
-      </div>
-      <div class="columns">
-        <div class="column is-2 is-offset-3 is-6-mobile is-offset-3-mobile">
-          <button class="button is-outlined is-link w-100" @click="handleClickGetLatLng">Get Lat
-            Long
-          </button>
-        </div>
-        <div class="column is-2 is-6-mobile is-offset-3-mobile">
-          <button class="button is-outlined is-info w-100"
-                  @click="handleClickGetCurrentLocation">Current Location
-          </button>
-        </div>
-        <div class="column is-2 is-6-mobile is-offset-3-mobile">
-          <button class="button is-outlined is-success w-100"
-                  @click="handleClickOpenMarkersModal">Get Markers Distance
-          </button>
-        </div>
-      </div>
-      <div class="modal" :class="{'is-active': openMarkersModal}">
-        <div class="modal-background"></div>
-        <div class="modal-card">
-          <div class="modal-card-head">
-            <p class="modal-card-title">Get Markers Distance</p>
-            <button class="delete" @click="openMarkersModal = false"></button>
+        <div class="columns">
+          <div class="column is-2 is-offset-3 is-6-mobile is-offset-3-mobile">
+            <button class="button is-outlined is-link w-100" @click="handleClickGetLatLng">Get Lat
+              Long
+            </button>
           </div>
-          <div class="modal-card-body">
-            <div class="field">
-              <label class="label">From</label>
-              <div class="control">
-                <div class="select">
-                  <select v-model="fromMarker">
-                    <option disabled value="default">Select Marker...</option>
-                    <option v-for="locationData in allLocationData" :value="locationData.marker">
-                      {{locationData.address}}
-                    </option>
-                    <option :value="currentLocationData.marker">{{currentLocationData.address}} (Current)</option>
-                  </select>
+          <div class="column is-2 is-6-mobile is-offset-3-mobile">
+            <button class="button is-outlined is-info w-100"
+                    @click="handleClickGetCurrentLocation">Current Location
+            </button>
+          </div>
+          <div class="column is-2 is-6-mobile is-offset-3-mobile">
+            <button class="button is-outlined is-success w-100"
+                    @click="handleClickOpenMarkersModal">Get Markers Distance
+            </button>
+          </div>
+        </div>
+        <div class="modal" :class="{'is-active': openMarkersModal}">
+          <div class="modal-background"></div>
+          <div class="modal-card">
+            <div class="modal-card-head">
+              <p class="modal-card-title">Get Markers Distance</p>
+              <button class="delete" @click="openMarkersModal = false"></button>
+            </div>
+            <div class="modal-card-body">
+              <div class="field">
+                <label class="label">From</label>
+                <div class="control">
+                  <div class="select">
+                    <select v-model="fromMarker">
+                      <option disabled value="default">Select Marker...</option>
+                      <option v-for="locationData in allLocationData" :value="locationData.marker">
+                        {{locationData.address}}
+                      </option>
+                      <option :value="currentLocationData.marker" v-if="currentLocationData.marker">
+                        {{currentLocationData.address}} (Current)
+                      </option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="label">To</label>
+                <div class="control">
+                  <div class="select">
+                    <select v-model="toMarker">
+                      <option disabled value="default">Select Marker...</option>
+                      <option v-for="locationData in allLocationData" :value="locationData.marker">
+                        {{locationData.address}}
+                      </option>
+                      <option :value="currentLocationData.marker" v-if="currentLocationData.marker">
+                        {{currentLocationData.address}} (Current)
+                      </option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <p>{{distanceMsg}}</p>
+              <p>{{directionMsg}}</p>
+            </div>
+            <div class="modal-card-foot">
+              <div class="columns w-100">
+                <div class="column">
+                  <button class="button is-link w-100" @click="handleClickGetDirection">Get Navigation Instructions
+                  </button>
+                </div>
+                <div class="column">
+                  <button class="button is-primary w-100" @click="handleClickGetDistance">Get Distance</button>
+                </div>
+                <div class="column">
+                  <button class="button w-100" @click="openMarkersModal = false">Cancel</button>
                 </div>
               </div>
             </div>
-
-            <div class="field">
-              <label class="label">To</label>
-              <div class="control">
-                <div class="select">
-                  <select v-model="toMarker">
-                    <option disabled value="default">Select Marker...</option>
-                    <option v-for="locationData in allLocationData" :value="locationData.marker">
-                      {{locationData.address}}
-                    </option>
-                    <option :value="currentLocationData.marker">{{currentLocationData.address}} (Current)</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <p>{{distanceMsg}}</p>
-
           </div>
-          <div class="modal-card-foot">
-            <button class="button is-primary" @click="handleClickGetDistance">Get Distance</button>
-            <button class="button" @click="openMarkersModal = false">Cancel</button>
+        </div>
+        <div class="tc">{{outputMsg}}</div>
+        <div class="tc">{{yourLocationMsg}}</div>
+      </div>
+      <div id="navigationPage" v-show="currentPage === 'navigationPage'">
+        <div id="navigationMap" class="column is-8 is-offset-2 h-50"></div>
+        <div class="column is-4 is-offset-4 is-8-mobile is-offset-2-mobile mt2">
+          <button class="button is-outlined is-link w-100" @click="handleClickStopNavigation">Stop Navigation</button>
+        </div>
+        <p class="tc mt2 f4">Distance: {{estimatedDistance}}</p>
+        <p class="tc f4">Time: {{estimatedTime}}</p>
+        <div class="column is-8 is-offset-2">
+          <div class="message is-link" v-for="(direction, index) in directions">
+            <div class="message-header">
+              <p>Step {{index + 1}} - {{direction.distance}} - {{direction.duration}}</p>
+            </div>
+            <div class="message-body" v-html="direction.instructions">
+            </div>
           </div>
         </div>
       </div>
-      <div>{{outputMsg}}</div>
-      <div>{{yourLocationMsg}}</div>
     </div>
     <script type="text/javascript" src="cordova.js"></script>
     <script type="text/javascript" src="js/vue.min.js"></script>
     <script type="text/javascript" src="js/index.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBzyeRbwaJmvWe_R4b7j4R15Lc8fcw16B0&libraries=geometry"></script>
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBzyeRbwaJmvWe_R4b7j4R15Lc8fcw16B0&libraries=geometry"></script>
   </body>
 </html>

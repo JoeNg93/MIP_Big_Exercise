@@ -12,23 +12,39 @@ var app = {
     var app = new Vue({
       el: '#app',
       data: {
+        currentPage: 'mainPage',
         allLocationData: [],
         currentLocationData: {},
         outputMsg: '',
         yourLocationMsg: '',
         distanceMsg: '',
+        directionMsg: '',
         address: '',
         map: null,
         geocoder: null,
         openMarkersModal: false,
         fromMarker: 'default',
-        toMarker: 'default'
+        toMarker: 'default',
+
+        // navigationPage
+        estimatedDistance: '',
+        estimatedTime: '',
+        directions: [],
+        navigationMap: null,
+        directionsRenderer: null
       },
       mounted: function() {
         this.map = new google.maps.Map(document.getElementById('map'), {
           center: { lat: 65.0120888, lng: 25.46507719996 },
           zoom: 13
         });
+        this.navigationMap = new google.maps.Map(
+          document.getElementById('navigationMap'),
+          {
+            center: { lat: 65.0120888, lng: 25.46507719996 },
+            zoom: 13
+          }
+        );
         this.geocoder = new google.maps.Geocoder();
       },
       methods: {
@@ -86,14 +102,6 @@ var app = {
             });
         },
         handleClickGetDistance: function() {
-          // var from = {
-          //   lat: this.fromMarker.position.lat(),
-          //   lng: this.fromMarker.position.lng()
-          // };
-          // var to = {
-          //   lat: this.toMarker.position.lat(),
-          //   lng: this.toMarker.position.lng()
-          // };
           var from = new google.maps.LatLng(
             this.fromMarker.position.lat(),
             this.fromMarker.position.lng()
@@ -119,6 +127,58 @@ var app = {
             return;
           }
           this.openMarkersModal = true;
+        },
+        handleClickGetDirection: function() {
+          var self = this;
+          var from = new google.maps.LatLng(
+            self.fromMarker.position.lat(),
+            self.fromMarker.position.lng()
+          );
+          var to = new google.maps.LatLng(
+            self.toMarker.position.lat(),
+            self.toMarker.position.lng()
+          );
+          var directionsService = new google.maps.DirectionsService();
+          directionsService.route(
+            {
+              origin: from,
+              destination: to,
+              travelMode: google.maps.DirectionsTravelMode.DRIVING,
+              unitSystem: google.maps.UnitSystem.METRIC
+            },
+            function(response, status) {
+              console.log(response);
+              if (status === google.maps.DirectionsStatus.OK) {
+                self.estimatedDistance =
+                  response.routes[0].legs[0].distance.text;
+                self.estimatedTime = response.routes[0].legs[0].duration.text;
+                self.directions = response.routes[0].legs[0].steps.map(function(
+                  step
+                ) {
+                  return {
+                    distance: step.distance.text,
+                    duration: step.duration.text,
+                    instructions: step.instructions
+                  };
+                });
+                console.log(self.directions);
+                self.currentPage = 'navigationPage';
+
+                self.directionsRenderer = new google.maps.DirectionsRenderer({
+                  map: self.navigationMap,
+                  directions: response
+                });
+                self.openMarkersModal = false;
+              } else {
+                self.directionMsg = 'Unable to get the direction!';
+              }
+            }
+          );
+        },
+        handleClickStopNavigation: function () {
+          this.directionsRenderer.setMap(null);
+          this.directionsRenderer = null;
+          this.currentPage = 'mainPage';
         },
         _getLatLng: function(address) {
           var self = this;
