@@ -133,9 +133,13 @@
         <div class="tc">{{outputMsg}}</div>
         <div class="tc">{{yourLocationMsg}}</div>
         <div id="info-window">
-          <p>{{currentClickMarkerInfo}}</p>
+          <label class="label">Info</label>
+          <ol v-if="currentClickMarkerInfo.length">
+            <li v-for="(info, index) in currentClickMarkerInfo">Info {{index + 1}}: {{info}}</li>
+          </ol>
+          <p v-else>No info yet</p>
           <div class="field">
-            <label class="label">Info</label>
+            <label class="label">Add New Info</label>
             <div class="control">
               <textarea class="textarea" placeholder="Info about this location..."
                         v-model="markerInfoToBeAdded"></textarea>

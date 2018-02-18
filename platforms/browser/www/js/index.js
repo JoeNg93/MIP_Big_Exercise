@@ -28,7 +28,7 @@ var app = {
         infoWindow: null,
         markerInfoToBeAdded: '',
         currentClickMarker: null,
-        currentClickMarkerInfo: '',
+        currentClickMarkerInfo: [],
 
         // navigationPage
         estimatedDistance: '',
@@ -216,18 +216,75 @@ var app = {
           firebase
             .database()
             .ref('/location_info')
-            .push({
-              info: self.markerInfoToBeAdded,
-              lat: lat,
-              lng: lng
-            })
-            .then(function() {
-              alert('New info added!');
-              self.infoWindow.close();
-            })
-            .catch(function() {
-              alert('Cannot add new info. Please try again later!');
-              self.infoWindow.close();
+            .once('value', function(snapshot) {
+              var locationInfo = snapshot.val();
+              if (!locationInfo) {
+                firebase
+                    .database()
+                    .ref('/location_info')
+                    .push({
+                      info: [self.markerInfoToBeAdded],
+                      lat: lat,
+                      lng: lng
+                    })
+                    .then(function() {
+                      alert('New info added!');
+                      self.markerInfoToBeAdded = '';
+                      self.infoWindow.close();
+                    })
+                    .catch(function() {
+                      alert('Cannot add new info. Please try again later!');
+                      self.infoWindow.close();
+                    });
+                return;
+              }
+
+              var locationInfoWithID = Object.keys(locationInfo).map(function (key) {
+                return Object.assign({}, {id: key}, locationInfo[key]);
+              });
+
+              var location = locationInfoWithID.find(function(
+                eachLocation
+              ) {
+                return eachLocation.lat === lat && eachLocation.lng === lng;
+              });
+              if (!location) {
+                firebase
+                  .database()
+                  .ref('/location_info')
+                  .push({
+                    info: [self.markerInfoToBeAdded],
+                    lat: lat,
+                    lng: lng
+                  })
+                  .then(function() {
+                    alert('New info added!');
+                    self.markerInfoToBeAdded = '';
+                    self.infoWindow.close();
+                  })
+                  .catch(function() {
+                    alert('Cannot add new info. Please try again later!');
+                    self.infoWindow.close();
+                  });
+              } else {
+                firebase
+                  .database()
+                  .ref('/location_info/' + location.id)
+                  .set({
+                    info: location.info.concat(self.markerInfoToBeAdded),
+                    lat: location.lat,
+                    lng: location.lng
+                  })
+                  .then(function() {
+                    alert('New info added!');
+                    self.markerInfoToBeAdded = '';
+                    self.infoWindow.close();
+                  })
+                  .catch(function() {
+                    alert('Cannot add new info. Please try again later!');
+                    self.infoWindow.close();
+                  });
+              }
             });
         },
         _initializeSavedMarkers: function() {
@@ -237,9 +294,13 @@ var app = {
             .ref('/location_info')
             .on('value', function(snapshot) {
               var locationInfo = snapshot.val();
+              if (!locationInfo) {
+                return;
+              }
+
               Object.values(locationInfo).forEach(function(location) {
                 var locationObj = { lat: location.lat, lng: location.lng };
-                var marker = self._addMarkerToMap(locationObj);
+                var marker = self._addMarkerToMap(locationObj, location.info);
                 self._getAddress(locationObj).then(function(data) {
                   self.allLocationData.push({
                     marker: marker,
@@ -294,7 +355,7 @@ var app = {
             navigator.geolocation.getCurrentPosition(resolve, reject);
           });
         },
-        _addMarkerToMap: function(locationObj) {
+        _addMarkerToMap: function(locationObj, locationInfo) {
           var self = this;
           self._clearMarker(locationObj);
           var marker = new google.maps.Marker({
@@ -303,6 +364,10 @@ var app = {
             map: this.map
           });
           marker.addListener('click', function() {
+            self.currentClickMarkerInfo = [];
+            if (locationInfo) {
+              self.currentClickMarkerInfo = locationInfo;
+            }
             self.currentClickMarker = marker;
             self.infoWindow.open(self.map, marker);
           });
