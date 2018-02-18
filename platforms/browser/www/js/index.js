@@ -25,6 +25,10 @@ var app = {
         openMarkersModal: false,
         fromMarker: 'default',
         toMarker: 'default',
+        infoWindow: null,
+        markerInfoToBeAdded: '',
+        currentClickMarker: null,
+        currentClickMarkerInfo: '',
 
         // navigationPage
         estimatedDistance: '',
@@ -34,18 +38,43 @@ var app = {
         directionsRenderer: null
       },
       mounted: function() {
-        this.map = new google.maps.Map(document.getElementById('map'), {
+        var self = this;
+        // Initialize maps
+        self.map = new google.maps.Map(document.getElementById('map'), {
           center: { lat: 65.0120888, lng: 25.46507719996 },
           zoom: 13
         });
-        this.navigationMap = new google.maps.Map(
+        self.navigationMap = new google.maps.Map(
           document.getElementById('navigationMap'),
           {
             center: { lat: 65.0120888, lng: 25.46507719996 },
             zoom: 13
           }
         );
-        this.geocoder = new google.maps.Geocoder();
+
+        // Initialize Firebase
+        var config = {
+          apiKey: 'AIzaSyDlD0WJ3uDrGK0tBWaIqVf3-I_DwCDiECo',
+          authDomain: 'mip-big-exercise-78ada.firebaseapp.com',
+          databaseURL: 'https://mip-big-exercise-78ada.firebaseio.com',
+          projectId: 'mip-big-exercise-78ada',
+          storageBucket: 'mip-big-exercise-78ada.appspot.com',
+          messagingSenderId: '60397382997'
+        };
+        firebase.initializeApp(config);
+        firebase
+          .auth()
+          .signInWithEmailAndPassword('t6ngtu00@students.oamk.fi', 't6ngtu00')
+          .then(function() {
+            self._initializeSavedMarkers();
+          });
+
+        // Initialize info window
+        self.infoWindow = new google.maps.InfoWindow({
+          content: document.getElementById('info-window')
+        });
+
+        self.geocoder = new google.maps.Geocoder();
       },
       methods: {
         handleClickGetLatLng: function() {
@@ -175,10 +204,50 @@ var app = {
             }
           );
         },
-        handleClickStopNavigation: function () {
+        handleClickStopNavigation: function() {
           this.directionsRenderer.setMap(null);
           this.directionsRenderer = null;
           this.currentPage = 'mainPage';
+        },
+        handleClickAddMarkerInfo: function() {
+          var self = this;
+          var lat = self.currentClickMarker.position.lat();
+          var lng = self.currentClickMarker.position.lng();
+          firebase
+            .database()
+            .ref('/location_info')
+            .push({
+              info: self.markerInfoToBeAdded,
+              lat: lat,
+              lng: lng
+            })
+            .then(function() {
+              alert('New info added!');
+              self.infoWindow.close();
+            })
+            .catch(function() {
+              alert('Cannot add new info. Please try again later!');
+              self.infoWindow.close();
+            });
+        },
+        _initializeSavedMarkers: function() {
+          var self = this;
+          firebase
+            .database()
+            .ref('/location_info')
+            .on('value', function(snapshot) {
+              var locationInfo = snapshot.val();
+              Object.values(locationInfo).forEach(function(location) {
+                var locationObj = { lat: location.lat, lng: location.lng };
+                var marker = self._addMarkerToMap(locationObj);
+                self._getAddress(locationObj).then(function(data) {
+                  self.allLocationData.push({
+                    marker: marker,
+                    address: data.address
+                  });
+                });
+              });
+            });
         },
         _getLatLng: function(address) {
           var self = this;
@@ -226,11 +295,16 @@ var app = {
           });
         },
         _addMarkerToMap: function(locationObj) {
-          this._clearMarker(locationObj);
+          var self = this;
+          self._clearMarker(locationObj);
           var marker = new google.maps.Marker({
             position: locationObj,
             animation: google.maps.Animation.DROP,
             map: this.map
+          });
+          marker.addListener('click', function() {
+            self.currentClickMarker = marker;
+            self.infoWindow.open(self.map, marker);
           });
           return marker;
         },
