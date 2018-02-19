@@ -132,7 +132,8 @@
         </div>
         <div class="tc">{{outputMsg}}</div>
         <div class="tc">{{yourLocationMsg}}</div>
-        <div id="info-window">
+        <div id="info-window" v-show="currentClickMarker">
+          <p v-if="currentClickMarker"><b>Lat:</b> {{currentClickMarker.position.lat()}} - <b>Longitude:</b> {{currentClickMarker.position.lng()}}</p>
           <label class="label">Info</label>
           <ol v-if="currentClickMarkerInfo.length">
             <li v-for="(info, index) in currentClickMarkerInfo">Info {{index + 1}}: {{info}}</li>

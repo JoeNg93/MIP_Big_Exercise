@@ -401,6 +401,7 @@ var app = {
           var marker = new google.maps.Marker({
             position: locationObj,
             animation: google.maps.Animation.DROP,
+            icon: 'img/icons8-location-50.png',
             map: this.map
           });
           return marker;

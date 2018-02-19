@@ -86,7 +86,9 @@
                       <option v-for="locationData in allLocationData" :value="locationData.marker">
                         {{locationData.address}}
                       </option>
-                      <option :value="currentLocationData.marker">{{currentLocationData.address}} (Current)</option>
+                      <option :value="currentLocationData.marker" v-if="currentLocationData.marker">
+                        {{currentLocationData.address}} (Current)
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -101,7 +103,9 @@
                       <option v-for="locationData in allLocationData" :value="locationData.marker">
                         {{locationData.address}}
                       </option>
-                      <option :value="currentLocationData.marker">{{currentLocationData.address}} (Current)</option>
+                      <option :value="currentLocationData.marker" v-if="currentLocationData.marker">
+                        {{currentLocationData.address}} (Current)
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -113,7 +117,8 @@
             <div class="modal-card-foot">
               <div class="columns w-100">
                 <div class="column">
-                  <button class="button is-link w-100" @click="handleClickGetDirection">Get Navigation Instructions</button>
+                  <button class="button is-link w-100" @click="handleClickGetDirection">Get Navigation Instructions
+                  </button>
                 </div>
                 <div class="column">
                   <button class="button is-primary w-100" @click="handleClickGetDistance">Get Distance</button>
@@ -127,6 +132,26 @@
         </div>
         <div class="tc">{{outputMsg}}</div>
         <div class="tc">{{yourLocationMsg}}</div>
+        <div id="info-window" v-show="currentClickMarker">
+          <p v-if="currentClickMarker"><b>Lat:</b> {{currentClickMarker.position.lat()}} - <b>Longitude:</b> {{currentClickMarker.position.lng()}}</p>
+          <label class="label">Info</label>
+          <ol v-if="currentClickMarkerInfo.length">
+            <li v-for="(info, index) in currentClickMarkerInfo">Info {{index + 1}}: {{info}}</li>
+          </ol>
+          <p v-else>No info yet</p>
+          <div class="field">
+            <label class="label">Add New Info</label>
+            <div class="control">
+              <textarea class="textarea" placeholder="Info about this location..."
+                        v-model="markerInfoToBeAdded"></textarea>
+            </div>
+          </div>
+          <div class="field">
+            <div class="control">
+              <button class="button is-link w-100" @click="handleClickAddMarkerInfo">Add</button>
+            </div>
+          </div>
+        </div>
       </div>
       <div id="navigationPage" v-show="currentPage === 'navigationPage'">
         <div id="navigationMap" class="column is-8 is-offset-2 h-50"></div>
@@ -145,8 +170,10 @@
           </div>
         </div>
       </div>
+
     </div>
     <script type="text/javascript" src="cordova.js"></script>
+    <script type="text/javascript" src="js/firebase.js"></script>
     <script type="text/javascript" src="js/vue.min.js"></script>
     <script type="text/javascript" src="js/index.js"></script>
     <script
